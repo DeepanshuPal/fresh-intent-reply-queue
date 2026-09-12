@@ -1,0 +1,79 @@
+# fresh-intent-reply-queue configuration
+# Copy to replyqueue.yaml and edit. One file, everything lives here.
+
+# --- Discovery ---
+subreddits:
+  - startups
+  - Entrepreneur
+  - smallbusiness
+  - marketing
+  - SaaS
+
+# Also pull search RSS per subreddit for your keywords. Off by default:
+# Reddit throttles search endpoints harder than /new/.rss.
+reddit_search: false
+
+# HN Algolia queries (free, keyless - https://hn.algolia.com/api)
+hn_queries:
+  - "reddit marketing"
+  - "find customers"
+
+# --- Prefilter ---
+keywords:
+  - "looking for"
+  - "recommend"
+  - "recommendation"
+  - "alternative to"
+  - "what tool"
+  - "how do i get customers"
+  - "lead gen"
+  - "cold outreach"
+negative_keywords:
+  - "hiring"
+  - "job posting"
+
+# --- Semantic match ---
+# Whom you sell to. The matcher ranks posts against this blurb.
+icp: >
+  I run a small B2B company and I am looking for founders, marketers and
+  agency owners who are actively trying to find customers, doing outbound
+  or community-led growth, asking for tool recommendations, or complaining
+  about their current marketing/sales tooling.
+
+match:
+  backend: fts        # fts (default, verified) | vec (optional extra: pip install .[vec])
+  threshold: 0.10     # min normalized match score to become an LLM-scoring candidate
+
+# --- LLM (BYOK) ---
+# Get a key at https://openrouter.ai/keys - free models work fine to start.
+models:
+  score: "nex-agi/nex-n2.5-mini:free"          # small, cheap: intent triage
+  draft: "nvidia/nemotron-3-super-120b-a12b:free"  # stronger: the reply itself
+openrouter_api_key_env: "OPENROUTER_API_KEY"
+
+# Per-run budgets so a runaway loop can never burn money.
+budgets:
+  max_score_calls_per_run: 20
+  max_drafts_per_run: 5
+  min_intent_score_to_draft: 60
+
+# --- Your voice (used by the drafter) ---
+voice:
+  notes: >
+    Direct, plain-spoken founder. Help first, pitch never. Short sentences.
+    Share what actually worked, admit tradeoffs. No buzzwords, no "great
+    question", no exclamation marks.
+  example_replies: []
+
+# --- Guardrails (enforced at approve time, logged append-only) ---
+guardrails:
+  weekly_ceiling: 10            # max approved+edited drafts per rolling 7 days
+  subreddit_cooldown_hours: 48  # min hours between approved replies in one subreddit
+  min_nonpromo_per_promo: 3     # at least N non-promotional approvals per promotional one
+
+# --- HTTP ---
+user_agent: "fresh-intent-reply-queue/0.1 (+https://github.com/DeepanshuPal/fresh-intent-reply-queue)"
+request_timeout_seconds: 30
+
+# --- Storage ---
+db_path: "replyqueue.db"

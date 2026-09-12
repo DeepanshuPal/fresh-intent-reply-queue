@@ -1,0 +1,14 @@
+# Scheduling belongs to cron or this long-running container - NOT GitHub
+# Actions (jobs get dropped under load and scheduled workflows are disabled
+# after 60 days of repo inactivity; an intent monitor that silently stops is
+# worse than none).
+services:
+  replyqueue:
+    build: ..
+    image: fresh-intent-reply-queue
+    command: ["--config", "/data/replyqueue.yaml", "watch", "--interval", "900"]
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:?set your BYOK key}
+    volumes:
+      - ./data:/data           # replyqueue.yaml + replyqueue.db live here
+    restart: unless-stopped
