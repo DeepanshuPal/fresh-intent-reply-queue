@@ -66,7 +66,7 @@ replyqueue runs                 # append-only evidence of every batch
 ```
 
 Run it on a loop with `replyqueue watch --interval 900`, under cron, or with
-Docker Compose (`docker compose up` from `docker/`). **Do not schedule this
+Docker Compose (`docker compose up` from the repository root). **Do not schedule this
 from GitHub Actions**: scheduled jobs get dropped under load and GitHub
 disables them after 60 days of repo inactivity. A monitor that silently stops
 is worse than none. Actions runs CI only.
