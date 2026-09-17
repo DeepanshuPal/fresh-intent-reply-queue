@@ -13,3 +13,5 @@ jobs:
           python-version: "3.12"
       - run: pip install -e .[dev]
       - run: pytest -q
+      - name: precision gate harness (synthetic week, no keys)
+        run: python evals/precision_gate.py --demo

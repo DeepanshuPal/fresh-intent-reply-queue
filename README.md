@@ -89,6 +89,28 @@ is worse than none. Actions runs CI only.
   `removed`; survival is recorded as `survived`. Reddit-side checks re-read
   the public thread RSS (no API), so detection is best-effort and can lag.
 
+## The day-7 precision gate
+
+The scorer puts drafts in front of you; your approve / edit / reject decisions
+are the ground truth for whether it was right. After about a week of live
+queue data, grade it:
+
+```bash
+python evals/precision_gate.py --db replyqueue.db
+```
+
+The gate reads your decided drafts (never writes), treats approvals and edits
+as saves and rejections as misses, and reports precision at every score
+threshold from 50 to 90, a ranking-quality AUC, a per-channel breakdown (so
+you can see which subreddit drags precision down), and the removal overlay
+among drafts you actually posted. It exits PASS, FAIL, or INSUFFICIENT DATA
+with a concrete recommendation for `min_intent_score_to_draft`. If precision
+at the operating threshold is weak, the fix is the scorer prompt or the
+threshold - not more volume.
+
+`python evals/precision_gate.py --demo` runs the same math on a synthetic
+week of data with a known answer; CI runs it on every push.
+
 ## BYOK: works with
 
 - **OpenRouter** (verified). One key covers scoring and drafting. Defaults are
@@ -96,7 +118,10 @@ is worse than none. Actions runs CI only.
   `nex-agi/nex-n2.5-mini:free` for scoring and
   `nvidia/nemotron-3-super-120b-a12b:free` for drafting. Swap in stronger paid
   models in `replyqueue.yaml` whenever you want.
-- **Exa** for semantic web discovery: planned, not implemented in v0.1.
+- **Exa** for semantic web discovery beyond Reddit/HN: planned, not
+  implemented in v0.1. **Firecrawl** for fetching the full pages behind
+  discovered links: same status. Both slot in as additional `sources/`
+  adapters behind the same prefilter/dedupe contract.
 
 Without a key the pipeline still runs: ingestion, dedupe, matching and a
 transparent heuristic scorer work offline. Drafting is disabled with no key,
